@@ -1,5 +1,6 @@
-using System;
-using System.Collections.Generic;
+#if DEBUG
+using System.Diagnostics;
+#endif
 using System.Reflection;
 using System.Reflection.Emit;
 using AutoRemoveFinishedBurns.Core;
@@ -10,30 +11,18 @@ using KSA;
 
 namespace AutoRemoveFinishedBurns.Features;
 
-/// <summary>
-/// Inserts our drawer call before the Mods-tab close in GameSettings.OnDrawUi.
-/// Insertion (rather than replacing the close call) lets several mods stack
-/// their drawers at the same site without conflicting; we also accept a
-/// previous mod's wrapper as the close anchor.
-/// </summary>
+[HarmonyPatch(typeof(GameSettings), nameof(GameSettings.OnDrawUi),
+    new[] { typeof(Camera) })]
 static class SettingsTabPatch
 {
-    public static void ApplyPatches(Harmony harmony)
-    {
-        harmony.CreateClassProcessor(typeof(SettingsTabPatch)).Patch();
-
-        if (DebugConfig.Settings)
-            DefaultCategory.Log.Debug("[AutoRemoveFinishedBurns] Settings tab patch applied.");
-    }
-
-    [HarmonyPatch(typeof(GameSettings), nameof(GameSettings.OnDrawUi))]
     [HarmonyTranspiler]
     static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
     {
         var codes = new List<CodeInstruction>(instructions);
-        MethodInfo endTabBar = AccessTools.Method(typeof(ImGui), nameof(ImGui.EndTabBar));
-        MethodInfo endRegionTab = AccessTools.Method(typeof(ImGuiHelper), nameof(ImGuiHelper.EndRegionTab));
-        MethodInfo drawerCall = AccessTools.Method(typeof(SettingsTabPatch), nameof(DrawBeforeEndRegionTab));
+        MethodInfo endTabBar = GameReflection.ImGui_EndTabBar!;
+        MethodInfo endRegionTab = GameReflection.ImGuiHelper_EndRegionTab!;
+        MethodInfo drawerCall = AccessTools.Method(typeof(SettingsTabPatch),
+            nameof(DrawBeforeEndRegionTab), Type.EmptyTypes)!;
 
         int endTabBarIdx = -1;
         for (int i = codes.Count - 1; i >= 0; i--)
@@ -48,7 +37,9 @@ static class SettingsTabPatch
         if (endTabBarIdx < 0)
         {
             DefaultCategory.Log.Warning(
-                "[AutoRemoveFinishedBurns] Transpiler: EndTabBar not found in GameSettings.OnDrawUi");
+                $"[AutoRemoveFinishedBurns] Transpiler: EndTabBar not found in " +
+                $"GameSettings.OnDrawUi (scanned {codes.Count} IL instructions). " +
+                "Settings tab not patched.");
             return codes;
         }
 
@@ -73,7 +64,10 @@ static class SettingsTabPatch
         if (anchorIdx < 0)
         {
             DefaultCategory.Log.Warning(
-                "[AutoRemoveFinishedBurns] Transpiler: Mods-tab close call not found before EndTabBar");
+                $"[AutoRemoveFinishedBurns] Transpiler: Mods-tab close call " +
+                $"(EndRegionTab or EndModsTabWithSettings wrapper) not found in " +
+                $"the {endTabBarIdx} IL instructions before EndTabBar. " +
+                "Settings tab not patched.");
             return codes;
         }
 
@@ -85,9 +79,9 @@ static class SettingsTabPatch
         return codes;
     }
 
-    // Convention-based loose-name match: any mod that wraps the close call should
-    // expose a static void(bool) method named "EndModsTabWithSettings" so other
-    // mods can find it as an anchor. AutoStage uses this name today.
+    // Convention-based loose-name match: any mod that wraps the close call
+    // exposes a static void(bool) method named "EndModsTabWithSettings" so
+    // other mods can find it as an anchor. AutoStage uses this name today.
     private static bool IsModsTabCloseWrapper(MethodInfo mi)
     {
         if (mi.Name != "EndModsTabWithSettings") return false;
@@ -99,6 +93,9 @@ static class SettingsTabPatch
 
     public static void DrawBeforeEndRegionTab()
     {
+#if DEBUG
+        long perfStart = DebugConfig.Performance ? Stopwatch.GetTimestamp() : 0;
+#endif
         // Reset the 2-column mod-list layout. We're still inside the
         // BeginRegionTab child window.
         ImGui.Columns();
@@ -111,9 +108,14 @@ static class SettingsTabPatch
         }
         catch (Exception ex)
         {
-            LogHelper.ErrorOnce("Settings.Draw",
-                $"[AutoRemoveFinishedBurns] Settings draw error: {ex.Message}");
+            LogHelper.ErrorOnce("Settings.Draw:" + ex.GetType().Name,
+                $"[AutoRemoveFinishedBurns] Settings draw threw: {ex}");
         }
+#if DEBUG
+        if (DebugConfig.Performance)
+            PerfTracker.Record("SettingsTabPatch.DrawBeforeEndRegionTab",
+                Stopwatch.GetTimestamp() - perfStart);
+#endif
     }
 
     private static void DrawSettings()

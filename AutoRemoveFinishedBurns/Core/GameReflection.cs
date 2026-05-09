@@ -11,20 +11,28 @@ static class GameReflection
     #region Detection
 
     public static readonly MethodInfo? Vehicle_UpdateFromTaskResults =
-        AccessTools.Method(typeof(Vehicle), "UpdateFromTaskResults");
+        AccessTools.Method(typeof(Vehicle), nameof(Vehicle.UpdateFromTaskResults),
+            new[]
+            {
+                typeof(SimStep),
+                typeof(VehicleUpdateData).MakeByRefType(),
+                typeof(ReadOnlySpan<Vehicle>),
+            });
 
     #endregion
 
     #region Settings
 
     public static readonly MethodInfo? GameSettings_OnDrawUi =
-        AccessTools.Method(typeof(GameSettings), nameof(GameSettings.OnDrawUi));
+        AccessTools.Method(typeof(GameSettings), nameof(GameSettings.OnDrawUi),
+            new[] { typeof(Camera) });
 
     public static readonly MethodInfo? ImGui_EndTabBar =
-        AccessTools.Method(typeof(ImGui), nameof(ImGui.EndTabBar));
+        AccessTools.Method(typeof(ImGui), nameof(ImGui.EndTabBar), Type.EmptyTypes);
 
     public static readonly MethodInfo? ImGuiHelper_EndRegionTab =
-        AccessTools.Method(typeof(ImGuiHelper), nameof(ImGuiHelper.EndRegionTab));
+        AccessTools.Method(typeof(ImGuiHelper), nameof(ImGuiHelper.EndRegionTab),
+            new[] { typeof(bool) });
 
     #endregion
 
@@ -34,7 +42,8 @@ static class GameReflection
     {
         var targets = new (string name, object? target)[]
         {
-            ("Vehicle.UpdateFromTaskResults", Vehicle_UpdateFromTaskResults),
+            ("Vehicle.UpdateFromTaskResults(SimStep, ref readonly VehicleUpdateData, ReadOnlySpan<Vehicle>)",
+                Vehicle_UpdateFromTaskResults),
         };
         return ValidateTargets("Detection", targets);
     }
@@ -43,9 +52,9 @@ static class GameReflection
     {
         var targets = new (string name, object? target)[]
         {
-            ("GameSettings.OnDrawUi", GameSettings_OnDrawUi),
-            ("ImGui.EndTabBar", ImGui_EndTabBar),
-            ("ImGuiHelper.EndRegionTab", ImGuiHelper_EndRegionTab),
+            ("GameSettings.OnDrawUi(Camera)", GameSettings_OnDrawUi),
+            ("ImGui.EndTabBar()", ImGui_EndTabBar),
+            ("ImGuiHelper.EndRegionTab(bool)", ImGuiHelper_EndRegionTab),
         };
         return ValidateTargets("Settings", targets);
     }

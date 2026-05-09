@@ -1,6 +1,4 @@
-using System;
 using System.Globalization;
-using System.IO;
 using Brutal.Logging;
 
 namespace AutoRemoveFinishedBurns.Core;
@@ -11,29 +9,22 @@ namespace AutoRemoveFinishedBurns.Core;
 /// </summary>
 static class Config
 {
-    private static string _modDir = string.Empty;
-    private static string _configPath = string.Empty;
+    private static readonly string ModDir = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+        "My Games", "Kitten Space Agency", "mods", "AutoRemoveFinishedBurns");
+
+    private static readonly string ConfigPath = Path.Combine(
+        ModDir, "autoremovefinishedburns.toml");
 
     public static bool Enabled { get; set; } = true;
 
-    public static void Init()
-    {
-        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        _modDir = Path.Combine(userProfile, "My Games", "Kitten Space Agency",
-            "mods", "AutoRemoveFinishedBurns");
-        _configPath = Path.Combine(_modDir, "autoremovefinishedburns.toml");
+    public static void Init() => Load();
 
-        Load();
-    }
-
-    public static void Reset()
-    {
-        Enabled = true;
-    }
+    public static void Reset() => Enabled = true;
 
     public static void Load()
     {
-        if (!File.Exists(_configPath))
+        if (!File.Exists(ConfigPath))
         {
             Save();
             return;
@@ -41,33 +32,29 @@ static class Config
 
         try
         {
-            foreach (string rawLine in File.ReadAllLines(_configPath))
+            // One-key file. Strip line comments, look for `enabled = true|false`.
+            foreach (string rawLine in File.ReadAllLines(ConfigPath))
             {
-                string line = rawLine.Trim();
-                if (line.Length == 0 || line[0] == '#') continue;
-
+                int hash = rawLine.IndexOf('#');
+                string line = (hash >= 0 ? rawLine.Substring(0, hash) : rawLine).Trim();
                 int eq = line.IndexOf('=');
                 if (eq < 1) continue;
-
-                string key = line.Substring(0, eq).Trim();
-                string value = line.Substring(eq + 1).Trim();
-
-                int commentIdx = value.IndexOf('#');
-                if (commentIdx >= 0)
-                    value = value.Substring(0, commentIdx).Trim();
-
-                if (key == "enabled" && bool.TryParse(value, out bool b))
+                if (line.Substring(0, eq).Trim() != "enabled") continue;
+                if (bool.TryParse(line.Substring(eq + 1).Trim(), out bool b))
+                {
                     Enabled = b;
+                    break;
+                }
             }
 
             if (DebugConfig.Settings)
                 DefaultCategory.Log.Debug(
-                    $"[AutoRemoveFinishedBurns] Config loaded: enabled={Enabled}");
+                    $"[AutoRemoveFinishedBurns] Config loaded from '{ConfigPath}': enabled={Enabled}");
         }
         catch (Exception ex)
         {
             DefaultCategory.Log.Error(
-                $"[AutoRemoveFinishedBurns] Failed to load config: {ex.Message}");
+                $"[AutoRemoveFinishedBurns] Failed to load config from '{ConfigPath}': {ex.Message}");
         }
     }
 
@@ -75,20 +62,20 @@ static class Config
     {
         try
         {
-            Directory.CreateDirectory(_modDir);
-            using var writer = new StreamWriter(_configPath);
+            Directory.CreateDirectory(ModDir);
+            using var writer = new StreamWriter(ConfigPath);
             writer.WriteLine("# AutoRemoveFinishedBurns configuration.");
             writer.WriteLine(string.Format(CultureInfo.InvariantCulture,
                 "enabled = {0}", Enabled ? "true" : "false"));
 
             if (DebugConfig.Settings)
                 DefaultCategory.Log.Debug(
-                    $"[AutoRemoveFinishedBurns] Config saved: enabled={Enabled}");
+                    $"[AutoRemoveFinishedBurns] Config saved to '{ConfigPath}': enabled={Enabled}");
         }
         catch (Exception ex)
         {
             DefaultCategory.Log.Error(
-                $"[AutoRemoveFinishedBurns] Failed to save config: {ex.Message}");
+                $"[AutoRemoveFinishedBurns] Failed to save config to '{ConfigPath}': {ex.Message}");
         }
     }
 }
