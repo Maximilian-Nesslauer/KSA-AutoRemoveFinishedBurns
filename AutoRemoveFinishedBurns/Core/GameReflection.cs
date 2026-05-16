@@ -14,8 +14,8 @@ static class GameReflection
         AccessTools.Method(typeof(Vehicle), nameof(Vehicle.UpdateFromTaskResults),
             new[]
             {
-                typeof(SimStep),
                 typeof(VehicleUpdateData).MakeByRefType(),
+                typeof(Vehicle),
                 typeof(ReadOnlySpan<Vehicle>),
             });
 
@@ -42,7 +42,7 @@ static class GameReflection
     {
         var targets = new (string name, object? target)[]
         {
-            ("Vehicle.UpdateFromTaskResults(SimStep, ref readonly VehicleUpdateData, ReadOnlySpan<Vehicle>)",
+            ("Vehicle.UpdateFromTaskResults(ref readonly VehicleUpdateData, Vehicle, ReadOnlySpan<Vehicle>)",
                 Vehicle_UpdateFromTaskResults),
         };
         return ValidateTargets("Detection", targets);

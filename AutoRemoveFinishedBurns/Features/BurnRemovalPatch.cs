@@ -11,8 +11,8 @@ using KSA;
 namespace AutoRemoveFinishedBurns.Features;
 
 [HarmonyPatch(typeof(Vehicle), nameof(Vehicle.UpdateFromTaskResults),
-    new[] { typeof(SimStep), typeof(VehicleUpdateData), typeof(ReadOnlySpan<Vehicle>) },
-    new[] { ArgumentType.Normal, ArgumentType.Ref, ArgumentType.Normal })]
+    new[] { typeof(VehicleUpdateData), typeof(Vehicle), typeof(ReadOnlySpan<Vehicle>) },
+    new[] { ArgumentType.Ref, ArgumentType.Normal, ArgumentType.Normal })]
 static class BurnRemovalPatch
 {
     private sealed class BurnModeBox

@@ -9,7 +9,7 @@ mod cleans up completed auto-burns automatically.
 
 This mod is written against the [StarMap loader](https://github.com/StarMapLoader/StarMap).
 
-Validated against KSA build version 2026.5.6.4337.
+Validated against KSA build version 2026.5.7.4397.
 
 ## Features
 
