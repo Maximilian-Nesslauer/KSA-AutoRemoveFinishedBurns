@@ -27,7 +27,7 @@ Validated against KSA build version 2026.5.12.4510.
 ## Installation
 
 1. Install [StarMap](https://github.com/StarMapLoader/StarMap).
-2. Download the latest release from the [Releases](https://github.com/Maximilian-Nesslauer/KSA-AutoRemoveFinishedBurns/releases) tab.
+2. Download the latest release from the [GitHub Releases](https://github.com/Maximilian-Nesslauer/KSA-AutoRemoveFinishedBurns/releases) tab or from [SpaceDock](https://spacedock.info/mod/4255/AutoRemoveFinishedBurns).
 3. Extract into `Documents\My Games\Kitten Space Agency\mods\AutoRemoveFinishedBurns\`.
 4. The game auto-discovers new mods and prompts you to enable them. Alternatively, add to `Documents\My Games\Kitten Space Agency\manifest.toml`:
 
@@ -71,6 +71,7 @@ Thread on the KSA forums: https://forums.ahwoo.com/threads/autoremovefinishedbur
 
 ## Check out my other mods
 
+- [AdvancedFlightComputer](https://github.com/Maximilian-Nesslauer/KSA-AdvancedFlightComputer) - Transfer Planner quick-tools (set Pe/Ap, match/set inclination, circularize), multi-pass burn splitting, and hyperbolic-target support (Oumuamua, 2I/Borisov, 3I/ATLAS) ([forum thread](https://forums.ahwoo.com/threads/advanced-flight-computer.783/))
 - [AutoStage](https://github.com/Maximilian-Nesslauer/KSA-AutoStage) - automatic staging during auto-burns and manual flight, with configurable ignition delays ([forum thread](https://forums.ahwoo.com/threads/autostage.891/))
+- [DeltaVMap](https://github.com/Maximilian-Nesslauer/KSA-DeltaVMap) - interactive delta-v subway map and transfer-window planner, auto-generated from the loaded system ([forum thread](https://forums.ahwoo.com/threads/deltavmap.978/))
 - [StageInfo](https://github.com/Maximilian-Nesslauer/KSA-StageInfo) - extra info in the stock Stage/Sequence window: per-stage delta V, TWR, burn time, fuel pool, RCS, and more ([forum thread](https://forums.ahwoo.com/threads/stageinfo.905/))
-- [AdvancedFlightComputer](https://github.com/Maximilian-Nesslauer/KSA-AdvancedFlightComputer) - set periapsis / set apoapsis / match or set inclination quick-tools in the Transfer Planner, plus hyperbolic-target support (Oumuamua, 2I/Borisov, 3I/ATLAS) ([forum thread](https://forums.ahwoo.com/threads/advanced-flight-computer.783/))
