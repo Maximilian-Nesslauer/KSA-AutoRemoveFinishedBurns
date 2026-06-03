@@ -15,6 +15,7 @@ static class GameReflection
             new[]
             {
                 typeof(VehicleUpdateData).MakeByRefType(),
+                typeof(BubbleOrigin).MakeByRefType(),
                 typeof(Vehicle),
                 typeof(ReadOnlySpan<Vehicle>),
             });
@@ -42,7 +43,7 @@ static class GameReflection
     {
         var targets = new (string name, object? target)[]
         {
-            ("Vehicle.UpdateFromTaskResults(ref readonly VehicleUpdateData, Vehicle, ReadOnlySpan<Vehicle>)",
+            ("Vehicle.UpdateFromTaskResults(ref readonly VehicleUpdateData, ref readonly BubbleOrigin, Vehicle, ReadOnlySpan<Vehicle>)",
                 Vehicle_UpdateFromTaskResults),
         };
         return ValidateTargets("Detection", targets);
