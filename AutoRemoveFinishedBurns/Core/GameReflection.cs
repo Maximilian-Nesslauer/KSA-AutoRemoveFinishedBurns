@@ -18,6 +18,8 @@ static class GameReflection
                 typeof(BubbleOrigin).MakeByRefType(),
                 typeof(Vehicle),
                 typeof(ReadOnlySpan<Vehicle>),
+                typeof(Brutal.Numerics.double3),
+                typeof(Brutal.Numerics.double3),
             });
 
     #endregion
