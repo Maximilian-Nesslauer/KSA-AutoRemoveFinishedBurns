@@ -66,6 +66,13 @@ public sealed class Mod
                 "[AutoRemoveFinishedBurns] Settings tab disabled - reflection targets not found.");
         }
 
+        if (AfcRcsInterop.TryEnable())
+            DefaultCategory.Log.Info(
+                "[AutoRemoveFinishedBurns] AdvancedFlightComputer RCS interop active.");
+        else if (DebugConfig.Detection)
+            DefaultCategory.Log.Debug(
+                "[AutoRemoveFinishedBurns] AdvancedFlightComputer not present; RCS interop off.");
+
         DefaultCategory.Log.Info("[AutoRemoveFinishedBurns] Loaded.");
     }
 
@@ -74,6 +81,7 @@ public sealed class Mod
     {
         _harmony?.UnpatchAll(_harmony.Id);
         _harmony = null;
+        AfcRcsInterop.Disable();
         BurnRemovalPatch.Reset();
         Config.Reset();
         LogHelper.Reset();

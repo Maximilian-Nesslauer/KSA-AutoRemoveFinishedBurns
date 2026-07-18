@@ -21,6 +21,11 @@ Validated against KSA build version 2026.7.6.4939.
   be resumed after staging.
 - **Auto-only**: manual burns are never touched. Players keep full
   control to fine-tune by hand.
+- **AdvancedFlightComputer RCS burns**: burns executed by
+  [AdvancedFlightComputer](https://github.com/Maximilian-Nesslauer/KSA-AdvancedFlightComputer)'s
+  RCS translation feature complete without the stock Auto-mode
+  transition, so this mod listens to AFC's completion event instead
+  (soft dependency: without AFC installed nothing changes).
 - **In-game toggle** in the Mods settings tab. Setting is persisted to
   a TOML file in the mod's user directory.
 
