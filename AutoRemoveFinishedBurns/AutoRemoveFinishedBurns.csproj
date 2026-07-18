@@ -12,6 +12,11 @@
     <PackageReference Include="StarMap.API" Version="0.3.6" />
   </ItemGroup>
 
+  <!-- The headless test consumer needs the internal patch classes and GameReflection. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="AutoRemoveFinishedBurns.HarnessTests" />
+  </ItemGroup>
+
   <ItemGroup>
     <Reference Include="KSA">
       <HintPath>..\..\..\refs\game\KSA.dll</HintPath>

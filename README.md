@@ -52,6 +52,15 @@ Required only to build the mod from source. Targets **.NET 10**.
 | [StarMap.API](https://github.com/StarMapLoader/StarMap) | NuGet | 0.3.6 |
 | [Lib.Harmony](https://www.nuget.org/packages/Lib.Harmony) | NuGet | 2.4.2 |
 
+## Testing
+
+`AutoRemoveFinishedBurns.HarnessTests/` is a developer-only test suite for [HeadlessHarness](https://github.com/Maximilian-Nesslauer/KSA-HeadlessHarness), which brings the real game up GPU-free and runs plug-in tests against the live simulation:
+
+- `arfb-api-drift` checks every reflection target and the IL anchor of the settings transpiler against the current game build, so an update that breaks the mod is caught without launching the full game.
+- `arfb-burn-removal` spawns a vehicle, adds a real burn through the game's input queue, and drives the real flight computer through the Auto -> Manual transition: a completed auto-burn is removed, while out-of-fuel, disabled-setting, manual-mode, and uncontrolled-vehicle cases keep the burn.
+
+To run it: build this solution and the HeadlessHarness repo, checked out as a sibling of this one (their `CopyToMods` targets deploy everything), then run the harness's `scripts/run-headless.ps1` (optionally with a `-Tests` name filter). Leave the deployed test mod disabled for normal play; it only does anything inside a harness run and is not part of the released mod.
+
 ## Mod compatibility
 
 - Known conflicts: none

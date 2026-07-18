@@ -15,8 +15,9 @@ namespace AutoRemoveFinishedBurns.Features;
     new[] { typeof(Camera) })]
 static class SettingsTabPatch
 {
+    // Internal so the HarnessTests consumer can run it against the live game IL as a drift check.
     [HarmonyTranspiler]
-    static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+    internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
     {
         var codes = new List<CodeInstruction>(instructions);
         MethodInfo endTabBar = GameReflection.ImGui_EndTabBar!;
