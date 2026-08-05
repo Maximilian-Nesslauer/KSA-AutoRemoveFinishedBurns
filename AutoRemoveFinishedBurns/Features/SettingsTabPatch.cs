@@ -11,6 +11,16 @@ using KSA;
 
 namespace AutoRemoveFinishedBurns.Features;
 
+/// <summary>
+/// Appends the mod's settings to the Mods page of the game's Settings window.
+///
+/// The settings window has no tab bar any more; it is a nav rail whose pages all
+/// render into one body child, closed by a single ConsoleStyle.PopWidgetStyle.
+/// Inserting the drawer call before that lands inside the body with the console
+/// widget style still pushed, and it composes with any other mod doing the same
+/// because nothing is replaced. The drawer checks which page is open, since the
+/// whole body is one code path now.
+/// </summary>
 [HarmonyPatch(typeof(GameSettings), nameof(GameSettings.OnDrawUi),
     new[] { typeof(Camera) })]
 static class SettingsTabPatch
@@ -20,42 +30,22 @@ static class SettingsTabPatch
     internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
     {
         var codes = new List<CodeInstruction>(instructions);
-        MethodInfo endTabBar = GameReflection.ImGui_EndTabBar!;
-        MethodInfo endRegionTab = GameReflection.ImGuiHelper_EndRegionTab!;
+        MethodInfo? anchor = GameReflection.ConsoleStyle_PopWidgetStyle;
         MethodInfo drawerCall = AccessTools.Method(typeof(SettingsTabPatch),
-            nameof(DrawBeforeEndRegionTab), Type.EmptyTypes)!;
+            nameof(DrawSettingsPage), Type.EmptyTypes)!;
 
-        int endTabBarIdx = -1;
-        for (int i = codes.Count - 1; i >= 0; i--)
-        {
-            if (codes[i].Calls(endTabBar))
-            {
-                endTabBarIdx = i;
-                break;
-            }
-        }
-
-        if (endTabBarIdx < 0)
+        if (anchor == null)
         {
             DefaultCategory.Log.Warning(
-                $"[AutoRemoveFinishedBurns] Transpiler: EndTabBar not found in " +
-                $"GameSettings.OnDrawUi (scanned {codes.Count} IL instructions). " +
-                "Settings tab not patched.");
+                "[AutoRemoveFinishedBurns] Transpiler: ConsoleStyle.PopWidgetStyle not found. " +
+                "Settings page not patched.");
             return codes;
         }
 
         int anchorIdx = -1;
-        for (int i = endTabBarIdx - 1; i >= 0; i--)
+        for (int i = 0; i < codes.Count; i++)
         {
-            CodeInstruction code = codes[i];
-            if (code.Calls(endRegionTab))
-            {
-                anchorIdx = i;
-                break;
-            }
-            if ((code.opcode == OpCodes.Call || code.opcode == OpCodes.Callvirt)
-                && code.operand is MethodInfo mi
-                && IsModsTabCloseWrapper(mi))
+            if (codes[i].Calls(anchor))
             {
                 anchorIdx = i;
                 break;
@@ -65,47 +55,31 @@ static class SettingsTabPatch
         if (anchorIdx < 0)
         {
             DefaultCategory.Log.Warning(
-                $"[AutoRemoveFinishedBurns] Transpiler: Mods-tab close call " +
-                $"(EndRegionTab or EndModsTabWithSettings wrapper) not found in " +
-                $"the {endTabBarIdx} IL instructions before EndTabBar. " +
-                "Settings tab not patched.");
+                $"[AutoRemoveFinishedBurns] Transpiler: no ConsoleStyle.PopWidgetStyle() call " +
+                $"in GameSettings.OnDrawUi (scanned {codes.Count} IL instructions). " +
+                "Settings page not patched.");
             return codes;
         }
 
-        // Parameterless call doesn't disturb the bool already on the stack
-        // for the close. Labels stay on the close so jumps targeting it skip
-        // our drawer.
+        // Insert, do not replace. Labels stay on the anchor so jumps targeting
+        // it skip our drawer instead of landing mid-call.
         codes.Insert(anchorIdx, new CodeInstruction(OpCodes.Call, drawerCall));
 
         return codes;
     }
 
-    // Convention-based loose-name match: any mod that wraps the close call
-    // exposes a static void(bool) method named "EndModsTabWithSettings" so
-    // other mods can find it as an anchor. AutoStage uses this name today.
-    private static bool IsModsTabCloseWrapper(MethodInfo mi)
+    public static void DrawSettingsPage()
     {
-        if (mi.Name != "EndModsTabWithSettings") return false;
-        if (!mi.IsStatic) return false;
-        if (mi.ReturnType != typeof(void)) return false;
-        ParameterInfo[] parameters = mi.GetParameters();
-        return parameters.Length == 1 && parameters[0].ParameterType == typeof(bool);
-    }
-
-    public static void DrawBeforeEndRegionTab()
-    {
+        if (!GameReflection.IsModsSettingsPageOpen())
+            return;
 #if DEBUG
         long perfStart = DebugConfig.Performance ? Stopwatch.GetTimestamp() : 0;
 #endif
-        // Reset the 2-column mod-list layout. We're still inside the
-        // BeginRegionTab child window.
-        ImGui.Columns();
-
         try
         {
-            if (ImGui.CollapsingHeader("Auto Remove Finished Burns Settings"u8,
-                ImGuiTreeNodeFlags.DefaultOpen))
-                DrawSettings();
+            ConsoleWidgets.Rule();
+            ConsoleWidgets.RegionHeader("AUTO REMOVE FINISHED BURNS".AsSpan());
+            DrawSettings();
         }
         catch (Exception ex)
         {
@@ -114,29 +88,26 @@ static class SettingsTabPatch
         }
 #if DEBUG
         if (DebugConfig.Performance)
-            PerfTracker.Record("SettingsTabPatch.DrawBeforeEndRegionTab",
+            PerfTracker.Record("SettingsTabPatch.DrawSettingsPage",
                 Stopwatch.GetTimestamp() - perfStart);
 #endif
     }
 
     private static void DrawSettings()
     {
-        ImGui.Indent();
-
         bool enabled = Config.Enabled;
-        if (ImGui.Checkbox("Enabled"u8, ref enabled))
+        ConsoleWidgets.BeginRow("ENABLED".AsSpan());
+        if (ConsoleWidgets.Checkbox("ArfbEnabled".AsSpan(), ref enabled, pending: false))
         {
             Config.Enabled = enabled;
             Config.Save();
         }
+        ConsoleWidgets.EndRow();
 
-        ImGui.Spacing();
         ImGui.TextWrapped(
             "When on, finished auto-burns are automatically removed from the " +
             "burn plan. Detection only fires for completed auto-burns, never " +
             "manual burns. Out-of-fuel cases are left in place so you can " +
             "resume them after staging.");
-
-        ImGui.Unindent();
     }
 }

@@ -30,12 +30,34 @@ static class GameReflection
         AccessTools.Method(typeof(GameSettings), nameof(GameSettings.OnDrawUi),
             new[] { typeof(Camera) });
 
-    public static readonly MethodInfo? ImGui_EndTabBar =
-        AccessTools.Method(typeof(ImGui), nameof(ImGui.EndTabBar), Type.EmptyTypes);
+    // Closes the settings window body. The settings pages all render into one
+    // body child now, so this single call is where a mod section can still be
+    // appended with the console widget style pushed.
+    public static readonly MethodInfo? ConsoleStyle_PopWidgetStyle =
+        AccessTools.Method(typeof(ConsoleStyle), nameof(ConsoleStyle.PopWidgetStyle),
+            Type.EmptyTypes);
 
-    public static readonly MethodInfo? ImGuiHelper_EndRegionTab =
-        AccessTools.Method(typeof(ImGuiHelper), nameof(ImGuiHelper.EndRegionTab),
-            new[] { typeof(bool) });
+    // Which settings page the nav rail has open. The enum is private to
+    // GameSettings, so the Mods member is resolved as a boxed value once and
+    // compared by equality rather than named in code.
+    public static readonly FieldInfo? GameSettings_openTab =
+        AccessTools.Field(typeof(GameSettings), "_openTab");
+
+    private static readonly object? ModsTab = ResolveModsTab();
+
+    public static bool IsModsSettingsPageOpen()
+    {
+        FieldInfo? field = GameSettings_openTab;
+        return ModsTab != null && field != null && ModsTab.Equals(field.GetValue(null));
+    }
+
+    private static object? ResolveModsTab()
+    {
+        Type? type = GameSettings_openTab?.FieldType;
+        if (type == null || !type.IsEnum)
+            return null;
+        return Enum.TryParse(type, "Mods", out object? value) ? value : null;
+    }
 
     #endregion
 
@@ -56,8 +78,8 @@ static class GameReflection
         var targets = new (string name, object? target)[]
         {
             ("GameSettings.OnDrawUi(Camera)", GameSettings_OnDrawUi),
-            ("ImGui.EndTabBar()", ImGui_EndTabBar),
-            ("ImGuiHelper.EndRegionTab(bool)", ImGuiHelper_EndRegionTab),
+            ("ConsoleStyle.PopWidgetStyle()", ConsoleStyle_PopWidgetStyle),
+            ("GameSettings._openTab (Mods page)", ModsTab),
         };
         return ValidateTargets("Settings", targets);
     }
