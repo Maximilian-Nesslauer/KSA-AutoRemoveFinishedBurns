@@ -1,5 +1,7 @@
 # AutoRemoveFinishedBurns [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+> **Archived.** As of AdvancedFlightComputer v0.8.0, automatic removal of finished burns is a feature of [AdvancedFlightComputer](https://github.com/Maximilian-Nesslauer/KSA-AdvancedFlightComputer). The final release (v0.1.9) stays available but will not receive further updates. If you install AdvancedFlightComputer, delete the `AutoRemoveFinishedBurns` folder under `Documents\My Games\Kitten Space Agency\mods\`, so two removers do not watch the same burn plan. Your switch setting is imported on the first load.
+
 Auto-remove finished burns from the burn plan in [Kitten Space Agency](https://ahwoo.com/app/100000/kitten-space-agency).
 
 In stock KSA, when an auto-burn completes the flight computer flips the
